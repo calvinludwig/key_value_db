@@ -1,15 +1,13 @@
 defmodule Database do
   def load(db) do
-    Agent.start_link(
-      fn ->
-        case db do
-          nil -> %{}
-          db -> db
-        end
-      end,
-      name: :main_db
-    )
+    initial_state = fn ->
+      case db do
+        nil -> %{}
+        _ -> db
+      end
+    end
 
+    Agent.start_link(initial_state, name: :main_db)
     Agent.start_link(fn -> [] end, name: :transactions)
   end
 
@@ -17,6 +15,7 @@ defmodule Database do
     Agent.update(:transactions, &[%{} | &1])
   end
 
+  @spec discard_transaction() :: :ok
   def discard_transaction() do
     Agent.update(:transactions, &List.delete_at(&1, 0))
   end

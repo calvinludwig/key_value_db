@@ -7,7 +7,6 @@ defmodule Percistance do
   end
 
   def save_file(data, path) do
-    :erlang.term_to_binary(data)
-    |> File.write(path)
+    File.write(path, :erlang.term_to_binary(data))
   end
 end

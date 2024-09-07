@@ -15,25 +15,22 @@ defmodule Cli do
   end
 
   def loop() do
-    IO.gets(">")
-    |> String.trim()
-    |> handle_input()
-    |> IO.puts()
-
-    loop()
+    case IO.gets(">") do
+      :eof -> :ok
+      input -> input |> String.trim() |> handle_input() |> IO.puts()
+      loop()
+    end
   end
 
   def handle_input(input) do
-    {intention, args} = Parser.parse_command(input)
-
-    case intention do
-      @set -> Handler.set(args)
-      @get -> Handler.get(args)
-      @begin -> Handler.begin()
-      @rollback -> Handler.rollback()
-      @commit -> Handler.commit()
-      @clear -> Handler.clear_screen()
-      command -> "ERR: No command #{command}"
+    case Parser.parse_command(input) do
+      {@set, args} -> Handler.set(args)
+      {@get, args} -> Handler.get(args)
+      {@begin, _} -> Handler.begin()
+      {@rollback, _} -> Handler.rollback()
+      {@commit, _} -> Handler.commit()
+      {@clear, _} -> Handler.clear_screen()
+      {command, _} -> "ERR: No command #{command}"
     end
   end
 end
