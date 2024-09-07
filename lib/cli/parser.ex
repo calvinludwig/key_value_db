@@ -1,5 +1,5 @@
-defmodule Command do
-  def parse(string) do
+defmodule Cli.Parser do
+  def parse_command(string) do
     string
     |> String.split(" ", parts: 2)
     |> case do
@@ -9,11 +9,11 @@ defmodule Command do
     end
   end
 
-  def parse_arguments(string, n) do
+  def parse_arguments(string, number_of_arguments) do
     regex = ~r/(?:[^\s"]|"(?:\\.|[^"\\])*")+/u
 
     case {
-      n,
+      number_of_arguments,
       Regex.scan(regex, string)
       |> Enum.map(&List.first/1)
     } do

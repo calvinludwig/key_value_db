@@ -8,6 +8,8 @@ defmodule DesafioCli do
   comando como lista de strings e executa a CLI.
   """
   def main(_args) do
+    stored_db = Percistance.read_file("database")
+    {:ok, _} = Database.load(stored_db)
     Cli.start()
   end
 end

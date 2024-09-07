@@ -1,10 +1,10 @@
 defmodule Database do
-  def load() do
+  def load(db) do
     Agent.start_link(
       fn ->
-        case File.read("database") do
-          {:ok, binary} -> :erlang.binary_to_term(binary)
-          _ -> %{}
+        case db do
+          nil -> %{}
+          db -> db
         end
       end,
       name: :main_db
@@ -35,12 +35,15 @@ defmodule Database do
           nil ->
             Agent.update(:main_db, &Map.merge(&1, cur))
             Agent.update(:transactions, &(&1 |> List.delete_at(0)))
+            true
 
           next ->
             Agent.update(
               :transactions,
               &(&1 |> List.delete_at(0) |> List.replace_at(0, Map.merge(next, cur)))
             )
+
+            false
         end
     end
   end
@@ -57,13 +60,13 @@ defmodule Database do
           end
 
         Agent.update(:main_db, &Map.put(&1, key, value))
-        updated
+        {updated, true}
 
       _ ->
         first = List.first(t)
-        already_exists = first |> Map.has_key?(key)
+        updated = first |> Map.has_key?(key)
         Agent.update(:transactions, &(&1 |> List.replace_at(0, first |> Map.put(key, value))))
-        already_exists
+        {updated, false}
     end
   end
 
@@ -80,12 +83,8 @@ defmodule Database do
     end
   end
 
-  def persist() do
-    binary =
-      Agent.get(:main_db, & &1)
-      |> :erlang.term_to_binary()
-
-    File.write("database", binary)
+  def get_db() do
+    Agent.get(:main_db, & &1)
   end
 
   def transactions do
