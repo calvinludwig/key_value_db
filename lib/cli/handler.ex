@@ -3,6 +3,26 @@ defmodule Cli.Handler do
 
   @file_path "database"
 
+  @set "SET"
+  @get "GET"
+  @begin "BEGIN"
+  @rollback "ROLLBACK"
+  @commit "COMMIT"
+  @clear "CLEAR"
+
+  def handle(input) do
+    case Parser.parse_command(input) do
+      {@set, args} -> set(args)
+      {@get, args} -> get(args)
+      {@begin, _} -> begin()
+      {@rollback, _} -> rollback()
+      {@commit, _} -> commit()
+      {@clear, _} -> clear_screen()
+      {command, _} -> "ERR: No command #{command}"
+    end
+  end
+
+  @spec get(binary()) :: <<_::56, _::_*8>>
   def get(args) do
     case Parser.parse_arguments(args, 1) do
       {:ok, [key]} ->
