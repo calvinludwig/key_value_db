@@ -22,7 +22,6 @@ defmodule Command.Handler do
     end
   end
 
-  @spec get(binary()) :: <<_::56, _::_*8>>
   def get(args) do
     case Parser.parse_arguments(args, 1) do
       {:ok, [key]} ->

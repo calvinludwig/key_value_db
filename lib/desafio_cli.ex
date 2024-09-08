@@ -10,9 +10,8 @@ defmodule DesafioCli do
   comando como lista de strings e executa a CLI.
   """
   def main(_args) do
-    stored_db = Percistance.read_file("database")
-
-    {:ok, _} = Database.load(stored_db)
+    Percistance.read_file("database")
+    |> Database.load()
 
     IO.puts("Waiting for input...")
     loop()
@@ -22,6 +21,10 @@ defmodule DesafioCli do
     case IO.gets(">") do
       :eof ->
         "Leaving..." |> IO.puts()
+
+      {:error, reason} ->
+        IO.puts("Failed to read input: #{inspect(reason)}")
+        loop()
 
       input ->
         input |> String.trim() |> Handler.handle() |> IO.puts()

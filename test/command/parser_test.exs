@@ -1,7 +1,7 @@
-defmodule CommandTest do
+defmodule Command.ParserTest do
   alias Command.Parser
   use ExUnit.Case
-  doctest Command
+  doctest Command.Parser
 
   test "parse command" do
     command = "SET a b"
@@ -58,8 +58,8 @@ defmodule CommandTest do
   end
 
   test "remove quotes" do
-    assert Command.remove_quotes("\"some frase\"") == "some frase"
-    assert Command.remove_quotes("\"18\"") == "18"
-    assert Command.remove_quotes("\"some \\\" word\"") == "some \" word"
+    assert Parser.remove_quotes("\"some frase\"") == "some frase"
+    assert Parser.remove_quotes("\"18\"") == "18"
+    assert Parser.remove_quotes("\"some \\\" word\"") == "some \" word"
   end
 end
