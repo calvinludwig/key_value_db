@@ -12,85 +12,80 @@ defmodule Database do
   end
 
   def new_transaction() do
-    Agent.update(:transactions, &[%{} | &1])
+    Agent.update(:transactions, fn state -> [%{} | state] end)
   end
 
-  @spec discard_transaction() :: :ok
   def discard_transaction() do
-    Agent.update(:transactions, &List.delete_at(&1, 0))
+    Agent.update(:transactions, fn state -> List.delete_at(state, 0) end)
   end
 
   def accept_transaction() do
-    t = transactions()
+    case transactions() do
+      [] ->
+        :no_transaction
 
-    case t |> length() do
-      0 ->
-        IO.puts("ERR: No transactions to commit")
-
-      _ ->
-        {cur, t} = List.pop_at(t, 0)
-
-        case List.first(t) do
-          nil ->
-            Agent.update(:main_db, &Map.merge(&1, cur))
-            Agent.update(:transactions, &(&1 |> List.delete_at(0)))
+      [current_transaction | rest] ->
+        case rest do
+          [] ->
+            Agent.update(:main_db, fn state -> Map.merge(state, current_transaction) end)
+            Agent.update(:transactions, fn _ -> [] end)
             true
 
-          next ->
-            Agent.update(
-              :transactions,
-              &(&1 |> List.delete_at(0) |> List.replace_at(0, Map.merge(next, cur)))
-            )
-
+          [next | rest] ->
+            Agent.update(:transactions, fn _ -> [Map.merge(next, current_transaction) | rest] end)
             false
         end
     end
   end
 
   def set(key, value) do
-    t = transactions()
+    case transactions() do
+      [] ->
+        {
+          Agent.get_and_update(:main_db, fn state ->
+            case Map.get(state, key) do
+              nil -> {:created, Map.put(state, key, value)}
+              _ -> {:updated, Map.put(state, key, value)}
+            end
+          end),
+          true
+        }
 
-    case t |> length() do
-      0 ->
-        updated =
-          case Agent.get(:main_db, &Map.get(&1, key)) do
-            nil -> false
-            _ -> true
-          end
+      [current_transaction | rest] ->
+        {
+          Agent.get_and_update(:transactions, fn _ ->
+            current_transaction = Map.put(current_transaction, key, value)
 
-        Agent.update(:main_db, &Map.put(&1, key, value))
-        {updated, true}
-
-      _ ->
-        first = List.first(t)
-        updated = first |> Map.has_key?(key)
-        Agent.update(:transactions, &(&1 |> List.replace_at(0, first |> Map.put(key, value))))
-        {updated, false}
+            case Map.get(current_transaction, key) do
+              nil -> {:created, [current_transaction | rest]}
+              _ -> {:updated, [current_transaction | rest]}
+            end
+          end),
+          false
+        }
     end
   end
 
   def get(key) do
-    case transactions() |> Enum.find(fn map -> Map.has_key?(map, key) end) do
-      nil ->
-        case Agent.get(:main_db, &Map.get(&1, key)) do
-          nil -> "NIL"
-          val -> val
-        end
-
-      transaction ->
-        transaction |> Map.get(key)
+    case get_in_transactions(key) do
+      nil -> get_in_main_db(key)
+      value -> value
     end
   end
 
+  defp get_in_transactions(key) do
+    Enum.find_value(transactions(), fn map -> Map.get(map, key) end)
+  end
+
+  defp get_in_main_db(key) do
+    Agent.get(:main_db, fn state -> Map.get(state, key) end)
+  end
+
   def get_db() do
-    Agent.get(:main_db, & &1)
+    Agent.get(:main_db, fn s -> s end)
   end
 
   def transactions do
-    Agent.get(:transactions, & &1)
-  end
-
-  def current_transaction do
-    transactions() |> List.first()
+    Agent.get(:transactions, fn s -> s end)
   end
 end
