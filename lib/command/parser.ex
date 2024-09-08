@@ -1,4 +1,4 @@
-defmodule Cli.Parser do
+defmodule Command.Parser do
   def parse_command(string) do
     string
     |> String.split(" ", parts: 2)

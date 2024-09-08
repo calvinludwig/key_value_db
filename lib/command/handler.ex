@@ -1,5 +1,5 @@
-defmodule Cli.Handler do
-  alias Cli.Parser
+defmodule Command.Handler do
+  alias Command.Parser
 
   @file_path "database"
 
