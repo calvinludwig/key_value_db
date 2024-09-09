@@ -1,8 +1,8 @@
 defmodule Command.Parser do
   def parse_command(input) do
     case String.split(input, " ", parts: 2) do
-      [intention, arguments] -> {String.upcase(intention), arguments}
-      [intention] -> {String.upcase(intention), ""}
+      [intention, arguments] -> {intention, arguments}
+      [intention] -> {intention, ""}
       _ -> {"", ""}
     end
   end
