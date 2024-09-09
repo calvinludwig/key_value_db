@@ -12,16 +12,16 @@ defmodule DesafioCli do
     Persistance.get_database()
     |> Database.load()
 
+    setup_shutdown()
     start_persistance_worker()
-    IO.puts("Waiting for input...")
+    IO.puts("Waiting for your input. Press CTRL+D to exit.")
     loop()
   end
 
   def loop() do
     case IO.gets(">") do
       :eof ->
-        Persistance.save_database()
-        "Leaving..." |> IO.puts()
+        :ok
 
       {:error, reason} ->
         IO.puts("Failed to read input: #{inspect(reason)}")
@@ -31,6 +31,27 @@ defmodule DesafioCli do
         input |> String.trim() |> Handler.handle() |> IO.puts()
         loop()
     end
+  end
+
+  def setup_shutdown() do
+    System.trap_signal(:sigquit, fn ->
+      graceful_shutdown()
+      :ok
+    end)
+
+    System.trap_signal(:sigstop, fn ->
+      graceful_shutdown()
+      :ok
+    end)
+
+    System.at_exit(fn _status ->
+      graceful_shutdown()
+    end)
+  end
+
+  def graceful_shutdown() do
+    Persistance.save_database()
+    IO.puts("Existing...")
   end
 
   def start_persistance_worker() do
