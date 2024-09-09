@@ -81,10 +81,12 @@ defmodule Database do
     Agent.get(:main_db, fn state -> Map.get(state, key) end)
   end
 
+  @spec get_db() :: map()
   def get_db() do
     Agent.get(:main_db, fn s -> s end)
   end
 
+  @spec transactions() :: list()
   def transactions do
     Agent.get(:transactions, fn s -> s end)
   end

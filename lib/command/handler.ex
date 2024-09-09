@@ -1,8 +1,6 @@
 defmodule Command.Handler do
   alias Command.Parser
 
-  @file_path "database"
-
   @set "SET"
   @get "GET"
   @begin "BEGIN"
@@ -40,11 +38,7 @@ defmodule Command.Handler do
   def set(args) do
     case Parser.parse_arguments(args, 2) do
       {:ok, [key, value]} ->
-        {operation, main_db} = Database.set(key, Parser.convert_value(value))
-
-        if main_db do
-          persist_db()
-        end
+        {operation, _} = Database.set(key, Parser.convert_value(value))
 
         case operation do
           :updated -> "Replaced to #{value}"
@@ -72,7 +66,6 @@ defmodule Command.Handler do
         "ERR: No transactions to commit"
 
       true ->
-        persist_db()
         show_current_transaction()
 
       false ->
@@ -82,11 +75,6 @@ defmodule Command.Handler do
 
   def clear_screen do
     "\e[H\e[2J"
-  end
-
-  defp persist_db() do
-    Database.get_db()
-    |> Percistance.save_file(@file_path)
   end
 
   defp show_current_transaction() do
