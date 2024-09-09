@@ -64,7 +64,9 @@ defmodule Command.ParserTest do
     assert Parser.convert_value("TRUE") == true
     assert Parser.convert_value("FALSE") == false
     assert Parser.convert_value("\"some string\"") == "some string"
-    assert Parser.convert_value("\"some string with \\\" escaped double quotes\"") == "some string with \" escaped double quotes"
+
+    assert Parser.convert_value("\"some string with \\\" escaped double quotes\"") ==
+             "some string with \" escaped double quotes"
 
     assert Parser.convert_value("abcd") == "abcd"
     assert Parser.convert_value("a10") == "a10"
