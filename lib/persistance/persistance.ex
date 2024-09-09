@@ -3,8 +3,8 @@ defmodule Persistance do
 
   def get_database() do
     case File.read(@db_path) do
-      {:ok, binary} -> :erlang.binary_to_term(binary)
-      _ -> nil
+      {:ok, binary} -> {:ok, :erlang.binary_to_term(binary)}
+      {:error, reason} -> {:error, "Failed to read database: #{reason}"}
     end
   end
 

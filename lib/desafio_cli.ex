@@ -9,8 +9,12 @@ defmodule DesafioCli do
   comando como lista de strings e executa a CLI.
   """
   def main(_args) do
-    Persistance.get_database()
-    |> Database.load()
+    case Persistance.get_database() do
+      {:ok, db} -> db |> Database.load()
+      {:error, _reason} ->
+        IO.puts("Unable to load stored database. Initializing a new one.")
+        Database.load(nil)
+    end
 
     setup_shutdown()
     start_persistance_worker()

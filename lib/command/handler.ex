@@ -21,32 +21,26 @@ defmodule Command.Handler do
   end
 
   def get(args) do
-    case Parser.parse_arguments(args, 1) do
-      {:ok, [key]} ->
-        value = Database.get(key)
-
-        case value do
-          nil -> "Value: NIL"
-          _ -> "Value: #{value}"
-        end
-
-      :error ->
-        "ERR \"GET <chave> - Syntax error\""
+    with {:ok, [key]} <- Parser.parse_arguments(args, 1),
+         value <- Database.get(key) do
+      case value do
+        nil -> "NIL"
+        _ -> value
+      end
+    else
+      :error -> "ERR \"GET <key> - Syntax error\""
     end
   end
 
   def set(args) do
-    case Parser.parse_arguments(args, 2) do
-      {:ok, [key, value]} ->
-        {operation, _} = Database.set(key, Parser.convert_value(value))
-
-        case operation do
-          :updated -> "Replaced to #{value}"
-          :created -> "Setted to #{value}"
-        end
-
-      :error ->
-        "ERR \"SET <chave> <valor> - Syntax error\""
+    with {:ok, [key, value]} <- Parser.parse_arguments(args, 2),
+         {operation, _} <- Database.set(key, Parser.convert_value(value)) do
+      case operation do
+        :updated -> "TRUE #{value}"
+        :created -> "FALSE #{value}"
+      end
+    else
+      :error -> "ERR \"SET <key> <value> - Syntax error\""
     end
   end
 
@@ -62,14 +56,8 @@ defmodule Command.Handler do
 
   def commit() do
     case Database.accept_transaction() do
-      :no_transaction ->
-        "ERR: No transactions to commit"
-
-      true ->
-        show_current_transaction()
-
-      false ->
-        show_current_transaction()
+      :no_transaction -> "ERR: No transactions to commit"
+      _ -> show_current_transaction()
     end
   end
 

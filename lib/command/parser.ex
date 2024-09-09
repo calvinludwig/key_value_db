@@ -7,11 +7,10 @@ defmodule Command.Parser do
     end
   end
 
+  @regex ~r/(?:[^\s"]|"(?:\\.|[^"\\])*")+/u
   def parse_arguments(string, number_of_arguments) do
-    regex = ~r/(?:[^\s"]|"(?:\\.|[^"\\])*")+/u
-
     arguments =
-      Regex.scan(regex, string)
+      Regex.scan(@regex, string)
       |> Enum.map(&List.first/1)
 
     if length(arguments) == number_of_arguments do
@@ -24,14 +23,14 @@ defmodule Command.Parser do
   def convert_value("TRUE"), do: true
   def convert_value("FALSE"), do: false
 
-  def convert_value(value) do
+  def convert_value(value) when is_binary(value) do
     case Integer.parse(value) do
       {int, _} -> int
       _ -> remove_quotes(value)
     end
   end
 
-  def remove_quotes(segment) do
+  defp remove_quotes(segment) do
     segment
     |> String.trim(~s("))
     |> String.replace(~r/\\"/, "\"")

@@ -2,8 +2,17 @@ defmodule DatabaseTest do
   use ExUnit.Case
   doctest Database
 
-  test "can save a value in db" do
+  setup_all do
     Database.load(nil)
+    :ok
+  end
+
+  setup do
+    Database.reset()
+    :ok
+  end
+
+  test "can save a value in db" do
     Database.set("some_key", "the_value")
     value = Database.get("some_key")
 
@@ -11,7 +20,6 @@ defmodule DatabaseTest do
   end
 
   test "can update a value in db" do
-    Database.load(nil)
     Database.set("some_key", "the_value")
     Database.set("some_key", "the_new_value")
     value = Database.get("some_key")
@@ -20,7 +28,6 @@ defmodule DatabaseTest do
   end
 
   test "start transaction and rollback" do
-    Database.load(nil)
     Database.set("a", 1)
     Database.set("b", 2)
     Database.new_transaction()
@@ -33,7 +40,6 @@ defmodule DatabaseTest do
   end
 
   test "start transaction and commit" do
-    Database.load(nil)
     Database.set("a", 1)
     Database.set("b", 2)
     Database.new_transaction()
@@ -46,7 +52,6 @@ defmodule DatabaseTest do
   end
 
   test "recursive transactions" do
-    Database.load(nil)
     Database.set("a", 1)
     Database.new_transaction()
     Database.set("a", 2)

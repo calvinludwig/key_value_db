@@ -56,10 +56,4 @@ defmodule Command.ParserTest do
     assert Parser.parse_arguments(arguments, 2) ==
              {:ok, ["\"a different frase\"", "\"other \\\" frase\""]}
   end
-
-  test "remove quotes" do
-    assert Parser.remove_quotes("\"some frase\"") == "some frase"
-    assert Parser.remove_quotes("\"18\"") == "18"
-    assert Parser.remove_quotes("\"some \\\" word\"") == "some \" word"
-  end
 end

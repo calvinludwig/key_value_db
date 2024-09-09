@@ -1,13 +1,7 @@
 defmodule Database do
   def load(db) do
-    initial_state = fn ->
-      case db do
-        nil -> %{}
-        _ -> db
-      end
-    end
-
-    Agent.start_link(initial_state, name: :main_db)
+    initial_state = if is_nil(db), do: %{}, else: db
+    Agent.start_link(fn -> initial_state end, name: :main_db)
     Agent.start_link(fn -> [] end, name: :transactions)
   end
 
@@ -25,15 +19,16 @@ defmodule Database do
         :no_transaction
 
       [current_transaction | rest] ->
-        case rest do
-          [] ->
-            Agent.update(:main_db, fn state -> Map.merge(state, current_transaction) end)
-            Agent.update(:transactions, fn _ -> [] end)
-            true
+        if Enum.empty?(rest) do
+          Agent.update(:main_db, &Map.merge(&1, current_transaction))
+          Agent.update(:transactions, fn _ -> [] end)
+          true
+        else
+          Agent.update(:transactions, fn [_ | rest] ->
+            [Map.merge(hd(rest), current_transaction) | tl(rest)]
+          end)
 
-          [next | rest] ->
-            Agent.update(:transactions, fn _ -> [Map.merge(next, current_transaction) | rest] end)
-            false
+          false
         end
     end
   end
@@ -41,53 +36,43 @@ defmodule Database do
   def set(key, value) do
     case transactions() do
       [] ->
-        {
+        update_result =
           Agent.get_and_update(:main_db, fn state ->
-            case Map.get(state, key) do
-              nil -> {:created, Map.put(state, key, value)}
-              _ -> {:updated, Map.put(state, key, value)}
-            end
-          end),
-          true
-        }
+            {(Map.has_key?(state, key) && :updated) || :created, Map.put(state, key, value)}
+          end)
 
-      [current_transaction | rest] ->
-        {
-          Agent.get_and_update(:transactions, fn _ ->
-            current_transaction = Map.put(current_transaction, key, value)
+        {update_result, true}
 
-            case Map.get(current_transaction, key) do
-              nil -> {:created, [current_transaction | rest]}
-              _ -> {:updated, [current_transaction | rest]}
-            end
-          end),
-          false
-        }
+      _ ->
+        update_result =
+          Agent.get_and_update(:transactions, fn [current | rest] ->
+            {(Map.has_key?(current, key) && :updated) || :created,
+             [Map.put(current, key, value) | rest]}
+          end)
+
+        {update_result, false}
     end
   end
 
   def get(key) do
-    case get_in_transactions(key) do
-      nil -> get_in_main_db(key)
-      value -> value
-    end
+    get_in_transactions(key) || get_in_main_db(key)
   end
 
   defp get_in_transactions(key) do
-    Enum.find_value(transactions(), fn map -> Map.get(map, key) end)
+    transactions()
+    |> Enum.find_value(&Map.get(&1, key))
   end
 
   defp get_in_main_db(key) do
-    Agent.get(:main_db, fn state -> Map.get(state, key) end)
+    Agent.get(:main_db, &Map.get(&1, key))
   end
 
-  @spec get_db() :: map()
-  def get_db() do
-    Agent.get(:main_db, fn s -> s end)
-  end
+  def get_db, do: Agent.get(:main_db, & &1)
 
-  @spec transactions() :: list()
-  def transactions do
-    Agent.get(:transactions, fn s -> s end)
+  def transactions, do: Agent.get(:transactions, & &1)
+
+  def reset() do
+    Agent.update(:main_db, fn _ -> %{} end)
+    Agent.update(:transactions, fn _ -> [] end)
   end
 end
