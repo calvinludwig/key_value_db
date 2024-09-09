@@ -11,6 +11,7 @@ defmodule DesafioCli do
   def main(_args) do
     Persistance.get_database()
     |> Database.load()
+
     start_persistance_worker()
     IO.puts("Waiting for input...")
     loop()
