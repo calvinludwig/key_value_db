@@ -51,9 +51,11 @@ defmodule Command.HandlerTest do
     assert Handler.handle("GET teste") == 1
     assert Handler.handle("ROLLBACK") == 0
     assert Handler.handle("GET teste") == "NIL"
+    assert Handler.handle("ROLLBACK") == "ERR: No transactions to rollback"
   end
 
   test "commit command" do
+    assert Handler.handle("COMMIT") == "ERR: No transactions to commit"
     assert Handler.handle("BEGIN") == 1
     assert Handler.handle("SET teste 1") == "FALSE 1"
     assert Handler.handle("GET teste") == 1
@@ -114,5 +116,9 @@ defmodule Command.HandlerTest do
     assert Handler.handle("ROLLBACK") == 0
     assert Handler.handle("GET x") == "NIL"
     assert Handler.handle("GET y") == "NIL"
+  end
+
+  test "clear screen" do
+    assert Handler.handle("CLEAR") == "\e[H\e[2J"
   end
 end

@@ -25,14 +25,17 @@ defmodule Command.Parser do
 
   def convert_value(value) when is_binary(value) do
     case Integer.parse(value) do
-      {int, _} -> int
+      {int, ""} -> int
       _ -> remove_quotes(value)
     end
   end
 
   defp remove_quotes(segment) do
-    segment
-    |> String.trim(~s("))
-    |> String.replace(~r/\\"/, "\"")
+    if String.starts_with?(segment, "\"") && String.ends_with?(segment, "\"") do
+      segment |> String.slice(1..-2//1) |> String.replace(~r/\\"/, "\"")
+    else
+      segment
+      |> String.replace(~r/\\"/, "\"")
+    end
   end
 end

@@ -50,8 +50,10 @@ defmodule Command.Handler do
   end
 
   def rollback() do
-    Database.discard_transaction()
-    show_current_transaction()
+    case Database.discard_transaction() do
+      :no_transaction -> "ERR: No transactions to rollback"
+      _ -> show_current_transaction()
+    end
   end
 
   def commit() do

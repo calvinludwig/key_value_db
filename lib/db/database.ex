@@ -10,7 +10,10 @@ defmodule Database do
   end
 
   def discard_transaction() do
-    Agent.update(:transactions, fn state -> List.delete_at(state, 0) end)
+    case transactions() do
+      [] -> :no_transaction
+      _ -> Agent.update(:transactions, fn [_ | rest] -> rest end)
+    end
   end
 
   def accept_transaction() do

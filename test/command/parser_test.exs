@@ -56,4 +56,22 @@ defmodule Command.ParserTest do
     assert Parser.parse_arguments(arguments, 2) ==
              {:ok, ["\"a different frase\"", "\"other \\\" frase\""]}
   end
+
+  test "convert value" do
+    assert Parser.convert_value("1") == 1
+    assert Parser.convert_value("\"42\"") == "42"
+    assert Parser.convert_value("1.0") == "1.0"
+    assert Parser.convert_value("TRUE") == true
+    assert Parser.convert_value("FALSE") == false
+    assert Parser.convert_value("\"some string\"") == "some string"
+    assert Parser.convert_value("\"some string with \\\" escaped double quotes\"") == "some string with \" escaped double quotes"
+
+    assert Parser.convert_value("abcd") == "abcd"
+    assert Parser.convert_value("a10") == "a10"
+    assert Parser.convert_value("uma string com espaços") == "uma string com espaços"
+    assert Parser.convert_value("101") == 101
+    assert Parser.convert_value("\\\"teste\\\"") == "\"teste\""
+    assert Parser.convert_value("\"101\"") == "101"
+    assert Parser.convert_value("\"TRUE\"") == "TRUE"
+  end
 end
